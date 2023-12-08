@@ -1,5 +1,5 @@
 # hangman_transformer
-Implementing a Transformer network to play the game of Hangman.
+Implementing a Transformer network to play the game of Hangman. Code courtesy : https://github.com/SamLynnEvans/Transformer
 
 ## Inspiration
 It is a well known fact that transformer models are the \textit{in} thing in the fields of Deep Learning shortly after the paper "Attention is all you need" by. The BERT (Bi-directional Encoder Representations from Transformers) model by Google has shown state-of-the-art results in NLP tasks. The model is training by performing masking on a series of words (i.e. sentences) with the target being the true unmasked sentence. For e.g. the masked sentence,
