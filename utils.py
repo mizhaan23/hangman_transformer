@@ -91,13 +91,3 @@ class MyMasker():
         for key in random.sample(counter.keys(), n_masks):
             del counter[key]
         return self._counter_to_word(counter, m)
-
-'''
-masker = MyMasker()
-tok = MyTokenizer()
-
-word = ['daddy', 'is', 'home']
-n = len(word)
-counter = masker.mask(word)
-print(counter)
-'''
