@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 from utils import MyMasker, MyTokenizer
-from data import TextDataset
+from utils.data import TextDataset
 from torch.utils.data import random_split
-from Models import Transformer
+from model.Models import Transformer
 
 max_len = 32
 model = Transformer(src_vocab=28, d_model=128, max_seq_len=max_len, N=12, heads=8, dropout=0.1)

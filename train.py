@@ -1,16 +1,14 @@
-import argparse
 import time
 import torch
 import torch.nn as nn
-from Models import Transformer
+from model.Models import Transformer
 # from Process import *
 import torch.nn.functional as F
-from Optim import CosineWithRestarts
-from Batch import create_masks
+from model.Batch import create_masks
 # import dill as pickle
 from utils import MyTokenizer, MyMasker
-from data import TextDataset
-from torch.utils.data import Dataset, DataLoader, random_split
+from utils.data import TextDataset
+from torch.utils.data import DataLoader, random_split
 
 
 def train_model(model, epochs=100, printevery=1):

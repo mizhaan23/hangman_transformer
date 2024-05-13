@@ -1,23 +1,21 @@
- # import argparse
+# import argparse
 import time
 import torch
 import torch.nn as nn
-from Models import Transformer
+from model.Models import Transformer
 # from Process import *
 import torch.nn.functional as F
-from Optim import CosineWithRestarts
-from Batch import create_masks
+from model.Batch import create_masks
 # import dill as pickle
-from utils import MyTokenizer, MyMasker
-from data import TextDataset
-from torch.utils.data import Dataset, DataLoader, random_split
-
+from utils.utils import MyTokenizer, MyMasker
+from utils.data import TextDataset
+from torch.utils.data import DataLoader, random_split
 
 # Loading data
-bs=128
+bs = 128
 dataset = TextDataset()
-train_size = int(0.8*len(dataset))
-test_size = len(dataset)-train_size
+train_size = int(0.8 * len(dataset))
+test_size = len(dataset) - train_size
 train_dataset, val_dataset = random_split(dataset, [train_size, test_size])
 
 trainloader = DataLoader(dataset=train_dataset, batch_size=bs, shuffle=True, num_workers=0)
@@ -52,11 +50,10 @@ def train_model(model, bs=32, epochs=1000, printevery=100):
 
         total_loss = 0
 
-
         for i, trg in enumerate(trainloader):
 
             perc = None
-            src = masker.mask(trg, perc)  # e.g. [m_zh__n, _s, _w_eso_e]
+            src = masker.mask(trg, perc)  # e.g. [m_zh__n, _s, _w_so_e]
             src = tokenizer.encode(src)  # e.g. [[], [], []]
 
             # trg is the complete word
@@ -89,15 +86,18 @@ def train_model(model, bs=32, epochs=1000, printevery=100):
             if (i + 1) % printevery == 0:
                 p = int(100 * (i + 1) / len(trainloader.dataset) * bs)
                 avg_loss = total_loss / printevery
-                print("\r   %dm: epoch %d [%s%s]  %d%%  loss = %.3f" %\
-                      ((time.time() - start) // 60, epoch + 1, "".join('#' * (p // 5)), "".join(' ' * (20 - (p // 5))), p, avg_loss), end='')
+                print("\r   %dm: epoch %d [%s%s]  %d%%  loss = %.3f" % \
+                      ((time.time() - start) // 60, epoch + 1, "".join('#' * (p // 5)), "".join(' ' * (20 - (p // 5))),
+                       p, avg_loss), end='')
 
             total_loss = 0
 
         if (epoch + 1) % 1 == 0:
-            torch.save(model.state_dict(),'./weights/model_weights_1')
+            torch.save(model.state_dict(), './weights/model_weights_1')
 
         print("\r   %dm: epoch %d [%s%s]  %d%%  loss = %.3f\nepoch %d complete, loss = %.03f" % \
-              ((time.time() - start) // 60, epoch + 1, "".join('#' * (100 // 5)), "".join(' ' * (20 - (100 // 5))), 100, avg_loss, epoch + 1, avg_loss))
+              ((time.time() - start) // 60, epoch + 1, "".join('#' * (100 // 5)), "".join(' ' * (20 - (100 // 5))), 100,
+               avg_loss, epoch + 1, avg_loss))
+
 
 train_model(model, bs=bs, printevery=1)

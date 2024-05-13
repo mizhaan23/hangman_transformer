@@ -1,10 +1,7 @@
 import torch
-import torch.nn as nn
-from Models import PGN
-from utils import MyTokenizer, MyMasker
-from Batch import create_masks
-from torch.autograd import Variable
+from utils.utils import MyTokenizer
 import numpy as np
+
 
 class Agent:        # src_vocab=28, d_model=128, max_seq_len=max_len, N=12, heads=8, dropout=0.1
     def __init__(self, model, lr=0.001, gamma=1, max_seq_len=32):
@@ -86,8 +83,6 @@ class Agent:        # src_vocab=28, d_model=128, max_seq_len=max_len, N=12, head
         # self.action_memory = []
         self.reward_memory = []
 
-
-
     def _get_special_matrix(self, gamma, n):
         mat = torch.zeros((n, n), dtype=torch.float)
         for i in range(n):
@@ -95,8 +90,6 @@ class Agent:        # src_vocab=28, d_model=128, max_seq_len=max_len, N=12, head
                 m_ij = gamma ** (j - i)
                 mat[j, i] = m_ij
         return mat
-
-
 
     def make_random_guess(self):
         r = np.random.randint(1, 26)
