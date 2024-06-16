@@ -53,13 +53,13 @@ class Hangman:
         self.answer = counter
         self.state = state
         return state, r, self.done
-
+    
 
 class HangmanEnv(gym.Env):
-    def __init__(self, dataloader, max_seq_len=32, init_counter=0):
+    def __init__(self, dataset, max_seq_len=32, init_counter=0):
         super(HangmanEnv, self).__init__()
 
-        self.dataset = shuffle(dataloader.dataset)
+        self.dataset = dataset
         self.counter = init_counter
         self.max_seq_len = max_seq_len
         self.action_space = spaces.Discrete(28)  # 26 possible actions (a-z) + '' + '_'
@@ -74,7 +74,7 @@ class HangmanEnv(gym.Env):
         self.remaining_attempts = 6  # Maximum attempts
         self.current_state = np.zeros(self.max_seq_len, dtype=int)  # Initial state
         self.game_over = False
-
+        
     def reset(self, *, seed=0, options=None):
         self.hidden_word = self.dataset[self.counter % len(self.dataset)]
         self.word_length = len(self.hidden_word)
@@ -92,13 +92,7 @@ class HangmanEnv(gym.Env):
             'guessed_letters': self.guessed_letters,
             'remaining_attempts': self.remaining_attempts,
         }
-
-    def generate_random_word(self):
-        # Replace this with your logic for generating random words
-        word_list = self.dataset
-        idx = self.counter % len(word_list)
-        self.counter += 1
-        return word_list[idx]
+    
 
     def step(self, action):
         if action in self.guessed_letters:

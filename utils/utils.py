@@ -2,6 +2,27 @@ import torch
 import random
 import numpy as np
 
+import torch
+import random
+import time
+import math
+from torch.utils.data import Dataset, DataLoader
+
+
+class TextDataset(Dataset):
+    def __init__(self, filepath):
+        with open(filepath, 'r') as f:
+            words = f.read().splitlines()
+        f.close()
+        self.n_samples = len(words)
+        self.words = words
+
+    def __getitem__(self, index):
+        return self.words[index]
+
+    def __len__(self):
+        return self.n_samples
+
 
 class MyTokenizer:
     def __init__(self, max_length=64):
@@ -73,45 +94,3 @@ class MyMasker:
                 word[pos] = ch
 
         return ''.join(word)
-
-    # def _get_counter(self, word):
-    #     n = len(word)
-    #     counter = {}
-    #     for i, ch in enumerate(word):
-    #         if ch in counter:
-    #             counter[ch].append(i)
-    #         else:
-    #             counter[ch] = [i]
-    #     return counter, n
-
-    # def _counter_to_word(self, counter, n=0):
-    #     word = ['_']*n
-    #     for ch in counter:
-    #         for pos in counter[ch]:
-    #             word[pos] = ch
-    #     return ''.join(word)
-    #
-    # def _rand_get_mask(self, word, percentage):
-    #     if percentage is None:
-    #         percentage = np.random.uniform()
-    #
-    #     n = len(word)
-    #     n_masks = max(1, int(percentage*n))
-    #     temp = list(range(n))
-    #     random.shuffle(temp)
-    #     i_masks = set(temp[:n_masks])
-    #     masked_word = ''
-    #     for i, ch in enumerate(word):
-    #         masked_word += ch if i not in i_masks else '_'
-    #     return masked_word
-
-    # def _get_mask(self, word, perc=None):
-    #     if perc is None:
-    #         perc = np.random.uniform()
-    #
-    #     counter, m = self._get_counter(word)
-    #     n = len(counter)
-    #     n_masks = max(1, int(perc*n))
-    #     for key in random.sample(list(counter.keys()), n_masks):
-    #         del counter[key]
-    #     return self._counter_to_word(counter, m)
