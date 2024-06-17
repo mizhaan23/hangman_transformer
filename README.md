@@ -30,4 +30,4 @@ The model outputs a tensor of dimension $`[batch, length, vocab\_size]`$, where 
 We then implement a cross-entropy loss as is best for the case of probability distributions and multi-class classification tasks. The model is then trained for about 25 epochs where the loss stabilizes and doesn't decrease further. A longer training time resulted in good results in validation and test. One can train for longer epochs as well.
 
 ## Results
-The model now picks the letter with the highest probability from the distribution it has learnt and is able to achieve a win rate of $>60%$ on the validation set. One can tune the hyperparameters and train for longer for better results.
+The model now picks the letter with the highest probability from the distribution it has learnt and is able to achieve a win rate of **above 60%** on the validation set. One can tune the hyperparameters and train for longer for better results.
