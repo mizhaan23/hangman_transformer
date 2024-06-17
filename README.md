@@ -1,4 +1,4 @@
-# Using an Encoder-only Transformer Network to play the game of HangMan
+# Using an Encoder-only Transformer Network to play the game of Hangman
 Implementing a Transformer network to play the game of Hangman. Code courtesy : https://github.com/SamLynnEvans/Transformer
 
 ## Inspiration
