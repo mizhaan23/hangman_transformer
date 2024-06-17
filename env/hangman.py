@@ -59,7 +59,7 @@ class HangmanEnv(gym.Env):
     def __init__(self, dataset, max_seq_len=32, init_counter=0):
         super(HangmanEnv, self).__init__()
 
-        self.dataset = dataset
+        self.dataset = shuffle(dataset)
         self.counter = init_counter
         self.max_seq_len = max_seq_len
         self.action_space = spaces.Discrete(28)  # 26 possible actions (a-z) + '' + '_'
