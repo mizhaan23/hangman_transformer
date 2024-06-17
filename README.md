@@ -1,8 +1,8 @@
-# hangman_transformer
+# Using an Encoder-only Transformer Network to play the game of Hangman
 Implementing a Transformer network to play the game of Hangman. Code courtesy : https://github.com/SamLynnEvans/Transformer
 
 ## Inspiration
-It is a well known fact that transformer models are the \textit{in} thing in the fields of Deep Learning shortly after the paper "Attention is all you need" by. The BERT (Bi-directional Encoder Representations from Transformers) model by Google has shown state-of-the-art results in NLP tasks. The model is training by performing masking on a series of words (i.e. sentences) with the target being the true unmasked sentence. For e.g. the masked sentence,
+It is a well known fact that transformer models are the *in* thing in the fields of Deep Learning shortly after the paper "Attention is all you need" by. The BERT (Bi-directional Encoder Representations from Transformers) model by Google has shown state-of-the-art results in NLP tasks. The model is training by performing masking on a series of words (i.e. sentences) with the target being the true unmasked sentence. For e.g. the masked sentence,
 
     I am going to ____.
 
@@ -30,4 +30,4 @@ The model outputs a tensor of dimension $`[batch, length, vocab\_size]`$, where 
 We then implement a cross-entropy loss as is best for the case of probability distributions and multi-class classification tasks. The model is then trained for about 25 epochs where the loss stabilizes and doesn't decrease further. A longer training time resulted in good results in validation and test. One can train for longer epochs as well.
 
 ## Results
-The model now picks the letter with the highest probability from the distribution it has learnt and is able to achieve a win rate of **56%** on the validation set. One can tune the hyperparameters and train for longer for better results.
+The model now picks the letter with the highest probability from the distribution it has learnt and is able to achieve a win rate of **above 60%** on the validation set. One can tune the hyperparameters and train for longer for better results.
