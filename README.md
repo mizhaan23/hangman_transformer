@@ -1,6 +1,8 @@
 # Using an Encoder-only Transformer Network to play the game of Hangman
 Implementing a Transformer network to play the game of Hangman to achieve a win rate of above 60%. Code courtesy : https://github.com/SamLynnEvans/Transformer
 
+Please check out the two notebooks that serve as a guide for the project, `pre_train_notebook.ipynb` and `runner_example_notebook.ipynb`.
+
 ## Inspiration
 It is a well known fact that transformer models are the *in* thing in the fields of Deep Learning and NLP shortly after the paper "Attention is all you need" came by. The BERT (Bi-directional Encoder Representations from Transformers) model by Google has shown state-of-the-art results in NLP tasks. This model was trained by performing a certain masking on a sequence of words (i.e. sentences) with the target being the true unmasked sentence. For e.g. the masked sentence,
 
