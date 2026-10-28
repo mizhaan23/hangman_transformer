@@ -35,46 +35,67 @@ The core thesis of this work is that Hangman can be framed as a partially observ
 ### 1. Vocabulary & Token Representation
 Let the English alphabet be $\Sigma = \{\text{a}, \text{b}, \ldots, \text{z}\}$. The network operates on a vocabulary:
 
-$$\mathcal{V} = \Sigma \cup \{\text{[PAD]}, \text{[BLANK]}\}$$
+$$
+\mathcal{V} = \Sigma \cup \{\text{[PAD]}, \text{[BLANK]}\}
+$$
 
 of size $|\mathcal{V}| = 28$, where $\text{[PAD]}$ represents sequence padding and $\text{[BLANK]}$ denotes the hidden letter placeholder (character `'_'`). The bijective token mapping $\tau : \mathcal{V} \to \{0, 1, \ldots, 27\}$ is defined as:
 
-$$\tau(\text{[PAD]}) = 0, \quad \tau(\text{a}) = 1, \;\ldots,\; \tau(\text{z}) = 26, \quad \tau(\text{[BLANK]}) = 27$$
+$$
+\tau(\text{[PAD]}) = 0, \quad \tau(\text{a}) = 1, \;\ldots,\; \tau(\text{z}) = 26, \quad \tau(\text{[BLANK]}) = 27
+$$
 
 Given a target word $W = (c_1, \ldots, c_L)$ of length $L \le M$ ($M = 32$), the ground-truth sequence $Y \in \mathcal{V}^M$ is:
 
-$$y_t = \begin{cases} \tau(c_t), & 1 \le t \le L \\ 0, & L < t \le M \quad (\text{[PAD]}) \end{cases}$$
+$$
+y_t = \begin{cases} \tau(c_t), & 1 \le t \le L \\ 0, & L < t \le M \quad (\text{[PAD]}) \end{cases}
+$$
 
 ### 2. The Hangman Masking Operator $\mathcal{M}(W, p)$
 In standard BERT, tokens are masked independently. In contrast, Hangman reveals or conceals letters **globally**: all occurrences of a chosen letter are revealed or hidden together.
 
 Let $U(W) = \{c \in \Sigma \mid \exists t, \, c_t = c\}$ be the set of unique letters in $W$. For masking ratio $p \sim \mathcal{U}(0, 1)$, we sample a subset of masked letters $S \subset U(W)$ of size $k = \min(|U(W)|, \max(1, \lfloor p \cdot |U(W)| \rfloor))$. The masked input $X \in \mathcal{V}^M$ is:
 
-$$x_t = \begin{cases} 27 \quad (\text{[BLANK]}), & \text{if } 1 \le t \le L \text{ and } c_t \in S \\ y_t, & \text{if } 1 \le t \le L \text{ and } c_t \in U(W) \setminus S \\ 0 \quad (\text{[PAD]}), & \text{if } L < t \le M \end{cases}$$
+$$
+x_t = \begin{cases} 27 \quad (\text{[BLANK]}), & \text{if } 1 \le t \le L \text{ and } c_t \in S \\ y_t, & \text{if } 1 \le t \le L \text{ and } c_t \in U(W) \setminus S \\ 0 \quad (\text{[PAD]}), & \text{if } L < t \le M \end{cases}
+$$
 
 ### 3. Transformer Encoder Architecture
 * **Input Embedding**: Discrete tokens are embedded into $\mathbb{R}^{d_{\text{model}}}$ ($d_{\text{model}} = 128$) and scaled by $\sqrt{d_{\text{model}}}$.
 * **Sinusoidal Positional Encoding**: Fixed continuous frequency signals inject token order:
-  $$\text{PE}_{(t, 2i)} = \sin\left(\frac{t}{10000^{2i / d_{\text{model}}}}\right), \quad \text{PE}_{(t, 2i+1)} = \cos\left(\frac{t}{10000^{2i / d_{\text{model}}}}\right)$$
+
+$$
+\text{PE}_{(t, 2i)} = \sin\left(\frac{t}{10000^{2i / d_{\text{model}}}}\right), \quad \text{PE}_{(t, 2i+1)} = \cos\left(\frac{t}{10000^{2i / d_{\text{model}}}}\right)
+$$
+
 * **Encoder Blocks**: $N = 12$ Transformer layers, each with $h = 8$ attention heads ($d_k = 16$), $d_{\text{ff}} = 2048$, ReLU activations, LayerNorm, and residual connections. Attention is masked with key-padding mask $\mathbf{m}_t = \mathbb{I}(x_t \ne 0)$.
 * **Output Projection**: A linear classification head projects encoder states $H_t$ to raw logits $Z_t \in \mathbb{R}^{28}$, yielding token probabilities via softmax:
-  $$\hat{P}(y_t = v \mid X; \theta) = \frac{\exp(Z_{t, v})}{\sum_{v'=0}^{27} \exp(Z_{t, v'})}$$
+
+$$
+\hat{P}(y_t = v \mid X; \theta) = \frac{\exp(Z_{t, v})}{\sum_{v'=0}^{27} \exp(Z_{t, v'})}
+$$
 
 ### 4. Training Objective
 Parameters $\theta$ are trained by minimizing the masked categorical cross-entropy loss over non-padding tokens:
 
-$$\mathcal{L}(\theta) = - \frac{1}{\sum_{t=1}^M \mathbb{I}(y_t \ne 0)} \sum_{t=1}^M \mathbb{I}(y_t \ne 0) \log \hat{P}(y_t \mid X; \theta)$$
+$$
+\mathcal{L}(\theta) = - \frac{1}{\sum_{t=1}^M \mathbb{I}(y_t \ne 0)} \sum_{t=1}^M \mathbb{I}(y_t \ne 0) \log \hat{P}(y_t \mid X; \theta)
+$$
 
 Optimized with Adam ($\alpha = 10^{-3}, \beta_1 = 0.9, \beta_2 = 0.98, \epsilon = 10^{-9}$).
 
 ### 5. Positional Marginalization Policy
 During test gameplay, given current observation $X$ and guessed letters $G \subset \Sigma$, the agent evaluates candidate letters $a \in \Sigma \setminus G$ by marginalizing probability mass across all active word positions:
 
-$$\text{Score}(a) = \sum_{t=1}^M \mathbb{I}(x_t \ne 0) \cdot \hat{P}(y_t = \tau(a) \mid X)$$
+$$
+\text{Score}(a) = \sum_{t=1}^M \mathbb{I}(x_t \ne 0) \cdot \hat{P}(y_t = \tau(a) \mid X)
+$$
 
 Invalid (previously guessed) letters are masked to $-\infty$, and the greedy action is selected:
 
-$$a^* = \arg\max_{a \in \Sigma \setminus G} \text{Score}(a)$$
+$$
+a^* = \arg\max_{a \in \Sigma \setminus G} \text{Score}(a)
+$$
 
 ---
 
