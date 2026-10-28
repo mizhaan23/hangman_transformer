@@ -7,7 +7,6 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Intermediate RL / GRPO experiment files
-train_grpo_jax.ipynb
 train_grpo_jax.py
 train_grpo_torch.ipynb
 train_simple_grpo_jax.py

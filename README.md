@@ -132,7 +132,6 @@ $$
 ├── runner_example_notebook.ipynb       # Original PyTorch game runner notebook
 │
 ├── train_grpo_jax.ipynb                # Group Relative Policy Optimization (GRPO) in JAX
-├── train_simple_grpo_jax.py            # Standalone Simple GRPO RL training script with live dashboard
 │
 ├── model_jax/                          # Flax NNX Transformer implementation
 │   ├── Models.py                       # Full Transformer module and weight loader
@@ -175,13 +174,13 @@ export XLA_PYTHON_CLIENT_MEM_FRACTION=0.50
   ```bash
   jupyter notebook pre_train_notebook_jax.ipynb
   ```
-* **High-Throughput Validation Simulation ($66.4\%$ Win Rate)**:
+* **High-Throughput Validation Simulation (66.4% Win Rate)**:
   ```bash
   jupyter notebook runner_example_notebook_jax.ipynb
   ```
-* **Reinforcement Learning Fine-Tuning (Simple GRPO)**:
+* **Reinforcement Learning Fine-Tuning (GRPO in JAX)**:
   ```bash
-  python train_simple_grpo_jax.py --num-prompts 32 --group-size 8 --lr 1e-5 --no-gui
+  jupyter notebook train_grpo_jax.ipynb
   ```
 
 ---
