@@ -9,21 +9,21 @@
 
 An end-to-end deep learning framework that models the game of Hangman as a character-level sequence reconstruction task using a 12-layer bidirectional Transformer encoder. The project includes an **exact functional re-implementation in pure JAX/Flax NNX**, executing the full pipeline (dataset buffering, Hangman masking, gradient updates, and multi-game rollouts) directly in GPU memory via XLA compilation.
 
-On a strictly held-out test split of **2,273 unseen words** drawn from a 250,000-word vocabulary, our supervised pre-trained Transformer achieves a **66.388% win rate** ($1,509 / 2,273$ words solved) under the standard 6-lives constraint, while simulating all test games concurrently in under **4.85 seconds** ($470.8$ games/sec).
+On a strictly held-out test split of **2,273 unseen words** drawn from a 250,000-word vocabulary, our supervised pre-trained Transformer achieves a **66.388% win rate** (1,509 / 2,273 words solved) under the standard 6-lives constraint, while simulating all test games concurrently in under **4.85 seconds** (470.8 games/sec).
 
 ---
 
 ## Key Highlights & Performance
 
-*(Benchmarked with exact batch size $128$ on NVIDIA GPU via WSL2)*
+*(Benchmarked with exact batch size 128 on NVIDIA GPU via WSL2)*
 
 | Metric | PyTorch Baseline | JAX / Flax NNX (This Repo) | Improvement / Notes |
 | :--- | :--- | :--- | :--- |
-| **Validation Win Rate** | 66.39% | **66.388%** ($1,509 / 2,273$) | Evaluated on unseen words with $\le 6$ lives |
-| **Test Suite Latency** | $\approx 45$ s (sequential loop) | **4.828 s** (GPU lockstep) | **$\approx 9.3\times$ faster game evaluation** |
-| **Inference Throughput** | $\approx 50$ games/s | **470.8 games/s** | Fully jitted 26-step `jax.lax.scan` |
-| **Training Throughput (Compute)** | $16.3$ batches/s ($2,088$ samples/s) | **$30.6$ batches/s** ($3,916$ samples/s) | **$\approx 1.9\times$ faster pure GPU compute** |
-| **1 Epoch Compute Time ($225$k words)** | $107.8$ s ($\approx 1.80$ min) | **$57.5$ s** ($\approx 0.96$ min) | Pure GPU masking (`jax.vmap`) |
+| **Validation Win Rate** | 66.39% | **66.388%** (1,509 / 2,273) | Evaluated on unseen words with $\le 6$ lives |
+| **Test Suite Latency** | ~45 s (sequential loop) | **4.828 s** (GPU lockstep) | **~9.3x faster game evaluation** |
+| **Inference Throughput** | ~50 games/s | **470.8 games/s** | Fully jitted 26-step `jax.lax.scan` |
+| **Training Throughput (Compute)** | 16.3 batches/s (2,088 samples/s) | **30.6 batches/s** (3,916 samples/s) | **~1.9x faster pure GPU compute** |
+| **1 Epoch Compute Time (225k words)** | 107.8 s (~1.80 min) | **57.5 s** (~0.96 min) | Pure GPU masking (`jax.vmap`) |
 | **Full Epoch Run (w/ Val, save=False)** | **123.7 s** (Notebook log) | **96.5 s** (Notebook log) | End-to-end epoch + validation pass |
 
 ---
@@ -33,20 +33,24 @@ On a strictly held-out test split of **2,273 unseen words** drawn from a 250,000
 The core thesis of this work is that Hangman can be framed as a partially observable discrete sequence reconstruction problem inspired by Masked Language Modeling (BERT), adapted to the specific global revelation rules of Hangman.
 
 ### 1. Vocabulary & Token Representation
-Let the English alphabet be $\Sigma = \{\texttt{a}, \texttt{b}, \ldots, \texttt{z}\}$. The network operates on vocabulary $\mathcal{V} = \Sigma \cup \{\texttt{[PAD]}, \texttt{\_}\}$ of size $|\mathcal{V}| = 28$, mapped bijectively via $\tau : \mathcal{V} \to \{0, 1, \ldots, 27\}$:
+Let the English alphabet be $\Sigma = \{\text{a}, \text{b}, \ldots, \text{z}\}$. The network operates on a vocabulary:
 
-$$\tau(\texttt{[PAD]}) = 0, \quad \tau(\texttt{a}) = 1, \;\ldots,\; \tau(\texttt{z}) = 26, \quad \tau(\texttt{\_}) = 27$$
+$$\mathcal{V} = \Sigma \cup \{\text{[PAD]}, \text{[BLANK]}\}$$
+
+of size $|\mathcal{V}| = 28$, where $\text{[PAD]}$ represents sequence padding and $\text{[BLANK]}$ denotes the hidden letter placeholder (character `'_'`). The bijective token mapping $\tau : \mathcal{V} \to \{0, 1, \ldots, 27\}$ is defined as:
+
+$$\tau(\text{[PAD]}) = 0, \quad \tau(\text{a}) = 1, \;\ldots,\; \tau(\text{z}) = 26, \quad \tau(\text{[BLANK]}) = 27$$
 
 Given a target word $W = (c_1, \ldots, c_L)$ of length $L \le M$ ($M = 32$), the ground-truth sequence $Y \in \mathcal{V}^M$ is:
 
-$$y_t = \begin{cases} \tau(c_t), & 1 \le t \le L \\ 0, & L < t \le M \quad (\texttt{[PAD]}) \end{cases}$$
+$$y_t = \begin{cases} \tau(c_t), & 1 \le t \le L \\ 0, & L < t \le M \quad (\text{[PAD]}) \end{cases}$$
 
 ### 2. The Hangman Masking Operator $\mathcal{M}(W, p)$
 In standard BERT, tokens are masked independently. In contrast, Hangman reveals or conceals letters **globally**: all occurrences of a chosen letter are revealed or hidden together.
 
 Let $U(W) = \{c \in \Sigma \mid \exists t, \, c_t = c\}$ be the set of unique letters in $W$. For masking ratio $p \sim \mathcal{U}(0, 1)$, we sample a subset of masked letters $S \subset U(W)$ of size $k = \min(|U(W)|, \max(1, \lfloor p \cdot |U(W)| \rfloor))$. The masked input $X \in \mathcal{V}^M$ is:
 
-$$x_t = \begin{cases} 27 \quad (\texttt{\_}), & \text{if } 1 \le t \le L \text{ and } c_t \in S \\ y_t, & \text{if } 1 \le t \le L \text{ and } c_t \in U(W) \setminus S \\ 0 \quad (\texttt{[PAD]}), & \text{if } L < t \le M \end{cases}$$
+$$x_t = \begin{cases} 27 \quad (\text{[BLANK]}), & \text{if } 1 \le t \le L \text{ and } c_t \in S \\ y_t, & \text{if } 1 \le t \le L \text{ and } c_t \in U(W) \setminus S \\ 0 \quad (\text{[PAD]}), & \text{if } L < t \le M \end{cases}$$
 
 ### 3. Transformer Encoder Architecture
 * **Input Embedding**: Discrete tokens are embedded into $\mathbb{R}^{d_{\text{model}}}$ ($d_{\text{model}} = 128$) and scaled by $\sqrt{d_{\text{model}}}$.
